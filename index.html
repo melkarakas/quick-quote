@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <title>Quick Estimate - Rockdale Homes</title>
-    <!-- Bootstrap CSS for basic styling -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <!-- Bootstrap 5 CSS for modern styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
     <style>
       /* Global Styles */
       body {
         font-family: "Montserrat", sans-serif;
-        background: #ffffff;
+        background-color: #ffffff;
         margin: 0;
         padding: 20px;
         color: #333;
@@ -69,6 +69,7 @@
       .btn-custom-sm:hover {
         background-color: #d1a13b;
       }
+      /* Card and Feature Styles */
       .project-card,
       .feature-card {
         position: relative;
@@ -156,7 +157,7 @@
         background-color: #F1B84B;
         color: #fff;
       }
-      /* Loading Bar Animation for Quote Calculation */
+      /* Loading Bar for Quote Calculation */
       .calculating-loading {
         width: 100%;
         height: 4px;
@@ -193,25 +194,25 @@
       <div v-if="currentStep === 1">
         <div class="contact-info-section">
           <h5>Contact Information</h5>
-          <div class="form-group">
-            <label for="firstName">First Name</label>
+          <div class="mb-3">
+            <label for="firstName" class="form-label">First Name</label>
             <input type="text" id="firstName" class="form-control" v-model="firstName" placeholder="Enter your first name" />
           </div>
-          <div class="form-group">
-            <label for="lastName">Last Name</label>
+          <div class="mb-3">
+            <label for="lastName" class="form-label">Last Name</label>
             <input type="text" id="lastName" class="form-control" v-model="lastName" placeholder="Enter your last name" />
           </div>
-          <div class="form-group">
-            <label for="email">Email</label>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
             <input type="email" id="email" class="form-control" v-model="email" placeholder="Enter your email" />
           </div>
-          <div class="form-group">
-            <label for="phone">Phone Number</label>
+          <div class="mb-3">
+            <label for="phone" class="form-label">Phone Number</label>
             <input type="tel" id="phone" class="form-control" v-model="phone" placeholder="Enter your phone number" />
           </div>
         </div>
-        <!-- When Next is clicked on Step 1, we validate the fields and email, then advance to Step 2 without sending the contact info -->
-        <button type="button" class="btn btn-custom btn-block" @click="nextStep">Next</button>
+        <!-- On Step 1, clicking Next only validates and advances; no contact info is sent yet -->
+        <button type="button" class="btn btn-custom w-100" @click="nextStep">Next</button>
       </div>
       
       <!-- Step 2: Project Type Selection -->
@@ -219,9 +220,9 @@
         <div class="nav-back">
           <button type="button" class="btn btn-custom-sm" @click="goBack">&laquo; Back</button>
         </div>
-        <p class="mb-3 font-weight-bold">Select a project type:</p>
-        <div class="row">
-          <div class="col-md-4 mb-3" v-for="option in projectOptions" :key="option.value">
+        <p class="mb-3 fw-bold">Select a project type:</p>
+        <div class="row g-3">
+          <div class="col-md-4" v-for="option in projectOptions" :key="option.value">
             <div class="card project-card" 
                  :class="{ selected: projectType === option.value }" 
                  @click="selectProject(option.value)" 
@@ -233,7 +234,6 @@
             </div>
           </div>
         </div>
-        <!-- No separate Next button is needed here -->
       </div>
       
       <!-- Step 3: Project Details & Quote Calculation -->
@@ -244,26 +244,33 @@
         <!-- For Basement Finishing Projects -->
         <div v-if="projectType === 'basement'">
           <h5>Basement Finishing Details</h5>
-          <div class="form-group">
-            <label>Basement Finishing Option:</label>
+          <div class="mb-3">
+            <label class="form-label">Basement Finishing Option:</label>
             <div class="d-flex">
-              <button type="button" class="toggle-button" :class="{ active: basementMode === 'full' }" @click="basementMode = 'full'">
+              <button type="button" class="toggle-button" 
+                      :class="{ active: basementMode === 'full' }" 
+                      @click="basementMode = 'full'">
                 Full Basement Finishing
               </button>
-              <button type="button" class="toggle-button" :class="{ active: basementMode === 'standalone' }" @click="basementMode = 'standalone'">
+              <button type="button" class="toggle-button" 
+                      :class="{ active: basementMode === 'standalone' }" 
+                      @click="basementMode = 'standalone'">
                 Partial Basement Finishing
               </button>
             </div>
           </div>
-          <div v-if="basementMode === 'full'" class="form-group">
-            <label for="area">What size is your basement? (sqft)</label>
-            <input type="number" id="area" class="form-control" v-model="area" placeholder="Enter basement size in sqft" />
+          <div v-if="basementMode === 'full'" class="mb-3">
+            <label for="area" class="form-label">What size is your basement? (sqft)</label>
+            <input type="number" id="area" class="form-control" v-model="area" placeholder="Enter basement size" />
           </div>
           <div class="mb-3">
-            <h6>Select Interior Features:</h6>
-            <div class="row">
-              <div class="col-md-3 mb-3" v-for="option in interiorOptions" :key="option.value">
-                <div class="card feature-card" :class="{ selected: interiorFeatures.includes(option.value) }" @click="toggleInterior(option.value)" :style="{ backgroundImage: 'url(' + option.image + ')' }">
+            <h6>Interior Features:</h6>
+            <div class="row g-3">
+              <div class="col-md-3" v-for="option in interiorOptions" :key="option.value">
+                <div class="card feature-card" 
+                     :class="{ selected: interiorFeatures.includes(option.value) }" 
+                     @click="toggleInterior(option.value)" 
+                     :style="{ backgroundImage: 'url(' + option.image + ')' }">
                   <div class="card-overlay"></div>
                   <div class="card-body">
                     <h6 class="card-title">{{ option.label }}</h6>
@@ -273,10 +280,13 @@
             </div>
           </div>
           <div class="mb-3">
-            <h6>Select Exterior Features:</h6>
-            <div class="row">
-              <div class="col-md-3 mb-3" v-for="option in exteriorOptions" :key="option.value">
-                <div class="card feature-card" :class="{ selected: exteriorFeatures.includes(option.value) }" @click="toggleExterior(option.value)" :style="{ backgroundImage: 'url(' + option.image + ')' }">
+            <h6>Exterior Features:</h6>
+            <div class="row g-3">
+              <div class="col-md-3" v-for="option in exteriorOptions" :key="option.value">
+                <div class="card feature-card" 
+                     :class="{ selected: exteriorFeatures.includes(option.value) }" 
+                     @click="toggleExterior(option.value)" 
+                     :style="{ backgroundImage: 'url(' + option.image + ')' }">
                   <div class="card-overlay"></div>
                   <div class="card-body">
                     <h6 class="card-title">{{ option.label }}</h6>
@@ -286,10 +296,13 @@
             </div>
           </div>
           <div class="mb-3">
-            <h6>Select Flooring:</h6>
-            <div class="row">
-              <div class="col-md-3 mb-3" v-for="option in flooringOptions" :key="option.value">
-                <div class="card feature-card" :class="{ selected: flooring === option.value }" @click="selectFlooring(option.value)" :style="{ backgroundImage: 'url(' + option.image + ')' }">
+            <h6>Flooring:</h6>
+            <div class="row g-3">
+              <div class="col-md-3" v-for="option in flooringOptions" :key="option.value">
+                <div class="card feature-card" 
+                     :class="{ selected: flooring === option.value }" 
+                     @click="selectFlooring(option.value)" 
+                     :style="{ backgroundImage: 'url(' + option.image + ')' }">
                   <div class="card-overlay"></div>
                   <div class="card-body">
                     <h6 class="card-title">{{ option.label }}</h6>
@@ -298,34 +311,34 @@
               </div>
             </div>
           </div>
-          <button type="button" class="btn btn-custom btn-block" @click="calculateQuote">Calculate Quote</button>
+          <button type="button" class="btn btn-custom w-100" @click="calculateQuote">Calculate Quote</button>
           <div v-if="calculating" class="calculating-loading">
             <div class="loading-bar"></div>
           </div>
         </div>
         <!-- For Other Project Types -->
         <div v-else>
-          <div v-if="projectType">
-            <p class="mb-3 font-weight-bold">Project Type: {{ getProjectLabel(projectType) }}</p>
+          <div v-if="projectType" class="mb-3">
+            <p class="fw-bold">Project Type: {{ getProjectLabel(projectType) }}</p>
           </div>
-          <div class="form-group">
-            <label for="area">Area (in square feet)</label>
-            <input type="number" id="area" class="form-control" v-model="area" placeholder="Enter area in square feet" />
+          <div class="mb-3">
+            <label for="area" class="form-label">Area (in square feet)</label>
+            <input type="number" id="area" class="form-control" v-model="area" placeholder="Enter area" />
           </div>
-          <div class="form-group">
-            <label for="finish">Finish Quality</label>
-            <select id="finish" class="form-control" v-model="finish">
+          <div class="mb-3">
+            <label for="finish" class="form-label">Finish Quality</label>
+            <select id="finish" class="form-select" v-model="finish">
               <option value="">Select finish quality</option>
               <option value="basic">Basic</option>
               <option value="standard">Standard</option>
               <option value="premium">Premium</option>
             </select>
           </div>
-          <div v-if="projectType === 'kitchen' || projectType === 'bathroom'" class="form-group">
-            <label for="additional">Additional Options (Number of extra fixtures/upgrades)</label>
+          <div v-if="projectType === 'kitchen' || projectType === 'bathroom'" class="mb-3">
+            <label for="additional" class="form-label">Additional Options (Number of extra fixtures/upgrades)</label>
             <input type="number" id="additional" class="form-control" v-model.number="additional" placeholder="0" />
           </div>
-          <button type="button" class="btn btn-custom btn-block" @click="calculateQuote">Calculate Quote</button>
+          <button type="button" class="btn btn-custom w-100" @click="calculateQuote">Calculate Quote</button>
           <div v-if="calculating" class="calculating-loading">
             <div class="loading-bar"></div>
           </div>
@@ -335,7 +348,7 @@
           <p>{{ formatCurrency(quote) }}</p>
         </div>
         <div v-if="quote !== null" class="mt-4 text-center">
-          <button type="button" class="btn btn-custom btn-block" @click="showBreakdown = !showBreakdown">
+          <button type="button" class="btn btn-custom w-100" @click="showBreakdown = !showBreakdown">
             {{ showBreakdown ? "Hide" : "Show" }} Pricing Breakdown
           </button>
         </div>
@@ -346,7 +359,7 @@
           <p><strong>Total:</strong> {{ formatCurrency(quote) }}</p>
         </div>
         <div v-if="quote !== null" class="mt-4 text-center">
-          <button type="button" class="btn btn-custom btn-block" @click="submitRequest">Submit Request</button>
+          <button type="button" class="btn btn-custom w-100" @click="submitRequest">Submit Request</button>
         </div>
       </div>
     </div>
@@ -358,7 +371,7 @@
       // Initialize EmailJS with your public key
       emailjs.init("qtZ7qNCtaw9RCD3l_");
       
-      // Utility function to collect all form data from the Vue instance
+      // Utility function to collect form data from the Vue instance
       function getFormData(vm) {
         return {
           first_name: vm.firstName,
@@ -417,17 +430,17 @@
             { value: "bedroom", label: "Bedroom", image: "https://webphotos.blob.core.windows.net/photos/39-IMG_6358.jpg" },
             { value: "bathroom", label: "Bathroom", image: "https://rockdale.ca/wp-content/uploads/2024/02/Copy-of-22D49TG4WAV8-scaled.jpg" },
             { value: "fullKitchen", label: "Full Kitchen", image: "https://rockdale.ca/wp-content/uploads/2024/02/Copy-of-22D49KF4DMGC-1-scaled.jpg" },
-            { value: "wetbar", label: "Wetbar", image: "https://webphotos.blob.core.windows.net/photos/replicate-prediction-yszz5wam6hrge0cmtzs8w65q0m.png" }
+            { value: "wetbar", label: "Wetbar", image: "https://webphotos.blob.core/windows.net/photos/replicate-prediction-yszz5wam6hrge0cmtzs8w65q0m.png" }
           ],
           exteriorOptions: [
             { value: "undergroundDoor", label: "Underground Door Opening", image: "https://webphotos.blob.core.windows.net/photos/IMG_2345.jpg" },
-            { value: "aboveGroundDoor", label: "Above Ground Door Opening", image: "https://webphotos.blob.core.windows.net/photos/IMG_1398.jpeg" },
-            { value: "egressWindow", label: "New Egress Window", image: "https://webphotos.blob.core.windows.net/photos/Basement-EGRESS-6.jpg" }
+            { value: "aboveGroundDoor", label: "Above Ground Door Opening", image: "https://webphotos.blob.core/windows.net/photos/IMG_1398.jpeg" },
+            { value: "egressWindow", label: "New Egress Window", image: "https://webphotos.blob.core/windows.net/photos/Basement-EGRESS-6.jpg" }
           ],
           flooringOptions: [
-            { value: "Hardwood", label: "Hardwood", image: "https://webphotos.blob.core.windows.net/photos/everwood-designer-plus-barossa-2-e1669668217311-1-1-2.jpg" },
-            { value: "Vinyl", label: "Vinyl", image: "https://webphotos.blob.core.windows.net/photos/42005-469-swatch.jpg" },
-            { value: "Carpet", label: "Carpet", image: "https://webphotos.blob.core.windows.net/photos/shopping.jpeg" }
+            { value: "Hardwood", label: "Hardwood", image: "https://webphotos.blob.core/windows.net/photos/everwood-designer-plus-barossa-2-e1669668217311-1-1-2.jpg" },
+            { value: "Vinyl", label: "Vinyl", image: "https://webphotos.blob.core/windows.net/photos/42005-469-swatch.jpg" },
+            { value: "Carpet", label: "Carpet", image: "https://webphotos.blob.core/windows.net/photos/shopping.jpeg" }
           ],
           rates: {
             kitchen: { basic: 200, standard: 300, premium: 400 },
@@ -446,13 +459,13 @@
                 this.errorMessage = "Please fill out all contact information fields.";
                 return;
               }
-              // Validate email via our backend proxy (NeverBounce)
+              // Validate email via backend proxy
               this.validateEmail(this.email).then(valid => {
                 if (!valid) {
                   this.errorMessage = "The email address appears to be invalid. Please enter a valid email address.";
                   return;
                 }
-                // Advance to step 2 without showing any success message
+                // Advance to step 2 (no intermediate success message)
                 this.currentStep = 2;
               }).catch(err => {
                 console.error("Error validating email:", err);
@@ -692,6 +705,7 @@
         }
       });
     </script>
+    <!-- Optional: Include any additional libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.2/iframeResizer.contentWindow.min.js"></script>
   </body>
 </html>
