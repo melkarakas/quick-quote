@@ -31,23 +31,20 @@
         color: #000;
         text-align: center;
       }
-      .form-control {
+      /* Modern form fields */
+      .form-control, .form-select, textarea {
         border-radius: 10px;
-        border: 1px solid #e0e0e0;
         font-size: 1rem;
       }
-      .form-control:focus {
-        border-color: #F1B84B;
-        box-shadow: 0 0 0 0.2rem rgba(241, 184, 75, 0.25);
-      }
-      .form-group label {
+      .form-label {
         font-weight: 600;
       }
+      /* Buttons */
       .btn-custom {
         background-color: #F1B84B;
         border: none;
         border-radius: 10px;
-        padding: 12px 20px;
+        padding: 12px;
         font-size: 1rem;
         font-weight: 600;
         color: #fff;
@@ -93,6 +90,20 @@
         border-width: 3px;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
       }
+      /* Selected card indicator */
+      .project-card.selected::before,
+      .feature-card.selected::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        width: 12px;
+        height: 12px;
+        background-color: #F1B84B;
+        border: 2px solid white;
+        border-radius: 50%;
+        z-index: 3;
+      }
       .card-overlay {
         position: absolute;
         top: 0;
@@ -103,7 +114,7 @@
         border-radius: 10px;
         z-index: 1;
       }
-      .card .card-body {
+      .card-body {
         position: relative;
         z-index: 2;
         display: flex;
@@ -113,11 +124,10 @@
         padding: 10px;
         text-align: center;
       }
-      .card .card-title {
+      .card-title {
         font-size: clamp(0.8rem, 1.5vw, 1.2rem);
-        margin: 0;
         color: #fff;
-        word-wrap: break-word;
+        margin: 0;
       }
       .nav-back {
         margin-bottom: 20px;
@@ -139,7 +149,7 @@
       h6 {
         color: #000;
       }
-      /* Toggle Button Styling for Basement Mode */
+      /* Toggle Button Styling */
       .toggle-button {
         margin-right: 10px;
         border: 2px solid #F1B84B;
@@ -149,7 +159,7 @@
         padding: 10px 20px;
         font-size: 1rem;
         font-weight: 600;
-        transition: all 0.3s ease;
+        transition: background-color 0.3s ease;
         cursor: pointer;
       }
       .toggle-button.active,
@@ -163,8 +173,8 @@
         height: 4px;
         background: #ddd;
         margin-top: 10px;
-        overflow: hidden;
         border-radius: 2px;
+        overflow: hidden;
       }
       .loading-bar {
         width: 0;
@@ -181,16 +191,11 @@
   <body>
     <div id="app" class="calculator-container">
       <h2>Quick Estimate</h2>
-      <!-- Inline Success Message -->
-      <div v-if="successMessage" class="alert alert-success" role="alert" style="margin-bottom: 20px;">
-        {{ successMessage }}
-      </div>
-      <!-- Inline Error Message -->
-      <div v-if="errorMessage" class="alert alert-danger" role="alert" style="margin-bottom: 20px;">
-        {{ errorMessage }}
-      </div>
+      <!-- Inline Alerts -->
+      <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+      <div v-if="successMessage" class="alert alert-success" role="alert">{{ successMessage }}</div>
       
-      <!-- Step 1: Contact Information -->
+      <!-- STEP 1: Contact Information -->
       <div v-if="currentStep === 1">
         <div class="contact-info-section">
           <h5>Contact Information</h5>
@@ -211,11 +216,11 @@
             <input type="tel" id="phone" class="form-control" v-model="phone" placeholder="Enter your phone number" />
           </div>
         </div>
-        <!-- On Step 1, clicking Next only validates and advances; no contact info is sent yet -->
-        <button type="button" class="btn btn-custom w-100" @click="nextStep">Next</button>
+        <!-- On Step 1, clicking Next validates, sends contact info discreetly, then advances -->
+        <button type="button" class="btn btn-custom w-100" @click="submitContactInfo">Next</button>
       </div>
       
-      <!-- Step 2: Project Type Selection -->
+      <!-- STEP 2: Project Type Selection -->
       <div v-if="currentStep === 2">
         <div class="nav-back">
           <button type="button" class="btn btn-custom-sm" @click="goBack">&laquo; Back</button>
@@ -236,31 +241,16 @@
         </div>
       </div>
       
-      <!-- Step 3: Project Details & Quote Calculation -->
-      <div v-if="currentStep === 3">
+      <!-- STEP 3: Project Details for Quote-Based Projects -->
+      <div v-if="currentStep === 3 && !isNonQuoteProject">
         <div class="nav-back">
           <button type="button" class="btn btn-custom-sm" @click="goBack">&laquo; Back</button>
         </div>
-        <!-- For Basement Finishing Projects -->
+        <!-- For Basement Finishing -->
         <div v-if="projectType === 'basement'">
           <h5>Basement Finishing Details</h5>
           <div class="mb-3">
-            <label class="form-label">Basement Finishing Option:</label>
-            <div class="d-flex">
-              <button type="button" class="toggle-button" 
-                      :class="{ active: basementMode === 'full' }" 
-                      @click="basementMode = 'full'">
-                Full Basement Finishing
-              </button>
-              <button type="button" class="toggle-button" 
-                      :class="{ active: basementMode === 'standalone' }" 
-                      @click="basementMode = 'standalone'">
-                Partial Basement Finishing
-              </button>
-            </div>
-          </div>
-          <div v-if="basementMode === 'full'" class="mb-3">
-            <label for="area" class="form-label">What size is your basement? (sqft)</label>
+            <label for="area" class="form-label">Basement Size (sqft)</label>
             <input type="number" id="area" class="form-control" v-model="area" placeholder="Enter basement size" />
           </div>
           <div class="mb-3">
@@ -311,18 +301,37 @@
               </div>
             </div>
           </div>
+          <!-- The Calculate button now triggers a loading animation -->
           <button type="button" class="btn btn-custom w-100" @click="calculateQuote">Calculate Quote</button>
           <div v-if="calculating" class="calculating-loading">
             <div class="loading-bar"></div>
           </div>
-        </div>
-        <!-- For Other Project Types -->
-        <div v-else>
-          <div v-if="projectType" class="mb-3">
-            <p class="fw-bold">Project Type: {{ getProjectLabel(projectType) }}</p>
+          <div v-if="quote !== null" class="mt-4 text-center">
+            <h4>Your Estimated Project Quote:</h4>
+            <p>{{ formatCurrency(quote) }}</p>
           </div>
+          <!-- Show Pricing Breakdown button -->
+          <div v-if="quote !== null" class="mt-3 text-center">
+            <button type="button" class="btn btn-custom w-100 mb-2" @click="showBreakdown = !showBreakdown">
+              {{ showBreakdown ? "Hide" : "Show" }} Pricing Breakdown
+            </button>
+            <div v-if="showBreakdown" class="mb-3">
+              <p><strong>Base Cost:</strong> {{ formatCurrency(baseCost) }}</p>
+              <p><strong>Interior Features Cost:</strong> {{ formatCurrency(interiorCost) }}</p>
+              <p><strong>Exterior Features Cost:</strong> {{ formatCurrency(exteriorCost) }}</p>
+              <p><strong>Total:</strong> {{ formatCurrency(quote) }}</p>
+            </div>
+          </div>
+          <!-- Next button to proceed to final review -->
+          <div v-if="quote !== null" class="mt-4 text-center">
+            <button type="button" class="btn btn-custom w-100" @click="currentStep = 4">Next</button>
+          </div>
+        </div>
+        <!-- For Kitchen & Bathroom -->
+        <div v-else-if="projectType === 'kitchen' || projectType === 'bathroom'">
+          <h5>{{ getProjectLabel(projectType) }} Details</h5>
           <div class="mb-3">
-            <label for="area" class="form-label">Area (in square feet)</label>
+            <label for="area" class="form-label">Area (sqft)</label>
             <input type="number" id="area" class="form-control" v-model="area" placeholder="Enter area" />
           </div>
           <div class="mb-3">
@@ -334,33 +343,93 @@
               <option value="premium">Premium</option>
             </select>
           </div>
-          <div v-if="projectType === 'kitchen' || projectType === 'bathroom'" class="mb-3">
-            <label for="additional" class="form-label">Additional Options (Number of extra fixtures/upgrades)</label>
+          <div class="mb-3">
+            <label for="additional" class="form-label">Additional Options (Number)</label>
             <input type="number" id="additional" class="form-control" v-model.number="additional" placeholder="0" />
           </div>
           <button type="button" class="btn btn-custom w-100" @click="calculateQuote">Calculate Quote</button>
           <div v-if="calculating" class="calculating-loading">
             <div class="loading-bar"></div>
           </div>
+          <div v-if="quote !== null" class="mt-4 text-center">
+            <h4>Your Estimated Project Quote:</h4>
+            <p>{{ formatCurrency(quote) }}</p>
+          </div>
+          <!-- Show Pricing Breakdown button -->
+          <div v-if="quote !== null" class="mt-3 text-center">
+            <button type="button" class="btn btn-custom w-100 mb-2" @click="showBreakdown = !showBreakdown">
+              {{ showBreakdown ? "Hide" : "Show" }} Pricing Breakdown
+            </button>
+            <div v-if="showBreakdown" class="mb-3">
+              <p><strong>Base Cost:</strong> {{ formatCurrency(baseCost) }}</p>
+              <p><strong>Interior Features Cost:</strong> {{ formatCurrency(interiorCost) }}</p>
+              <p><strong>Exterior Features Cost:</strong> {{ formatCurrency(exteriorCost) }}</p>
+              <p><strong>Total:</strong> {{ formatCurrency(quote) }}</p>
+            </div>
+          </div>
+          <!-- Next button to proceed to final review -->
+          <div v-if="quote !== null" class="mt-4 text-center">
+            <button type="button" class="btn btn-custom w-100" @click="currentStep = 4">Next</button>
+          </div>
         </div>
-        <div v-if="quote !== null" class="quote-display mt-4 text-center">
-          <h4>Your Estimated Project Quote:</h4>
+      </div>
+      
+      <!-- STEP 3 for Non-Quote Projects -->
+      <div v-if="currentStep === 3 && isNonQuoteProject">
+        <div class="nav-back">
+          <button type="button" class="btn btn-custom-sm" @click="goBack">&laquo; Back</button>
+        </div>
+        <h5>{{ getProjectLabel(projectType) }}</h5>
+        <!-- New paragraph added below the header -->
+        <p>We need to get in touch to give you an estimate for this project. Please tell us about your project and we will get back to you.</p>
+        <div class="mb-3">
+          <label for="estimatedDate" class="form-label">Estimated Project Start (Month)</label>
+          <select id="estimatedDate" class="form-select" v-model="estimatedProjectDate">
+            <option value="">Select month</option>
+            <option v-for="month in months" :key="month" :value="month">{{ month }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="projectNotes" class="form-label">Additional Project Notes</label>
+          <textarea id="projectNotes" class="form-control" rows="4" v-model="additionalNotes" placeholder="Enter any additional notes"></textarea>
+        </div>
+        <!-- Button text changed from "Receive your Estimate" to "Send Request" -->
+        <button type="button" class="btn btn-custom w-100" @click="submitRequest">Send Request</button>
+      </div>
+      
+      <!-- STEP 4: Final Review (Quote-Based Projects) -->
+      <div v-if="currentStep === 4">
+        <div class="nav-back">
+          <button type="button" class="btn btn-custom-sm" @click="currentStep = 3">&laquo; Back</button>
+        </div>
+        <h5>Your Estimated Quote</h5>
+        <div class="quote-display text-center mb-3">
           <p>{{ formatCurrency(quote) }}</p>
         </div>
-        <div v-if="quote !== null" class="mt-4 text-center">
-          <button type="button" class="btn btn-custom w-100" @click="showBreakdown = !showBreakdown">
+        <!-- Pricing Breakdown Toggle -->
+        <div v-if="quote !== null" class="mb-3 text-center">
+          <button type="button" class="btn btn-custom w-100 mb-2" @click="showBreakdown = !showBreakdown">
             {{ showBreakdown ? "Hide" : "Show" }} Pricing Breakdown
           </button>
+          <div v-if="showBreakdown" class="mb-3">
+            <p><strong>Base Cost:</strong> {{ formatCurrency(baseCost) }}</p>
+            <p><strong>Interior Features Cost:</strong> {{ formatCurrency(interiorCost) }}</p>
+            <p><strong>Exterior Features Cost:</strong> {{ formatCurrency(exteriorCost) }}</p>
+            <p><strong>Total:</strong> {{ formatCurrency(quote) }}</p>
+          </div>
         </div>
-        <div v-if="showBreakdown" class="mt-3">
-          <p><strong>Base Cost:</strong> {{ formatCurrency(baseCost) }}</p>
-          <p><strong>Interior Features Cost:</strong> {{ formatCurrency(interiorCost) }}</p>
-          <p><strong>Exterior Features Cost:</strong> {{ formatCurrency(exteriorCost) }}</p>
-          <p><strong>Total:</strong> {{ formatCurrency(quote) }}</p>
+        <div class="mb-3">
+          <label for="estimatedDateFinal" class="form-label">Estimated Project Start (Month)</label>
+          <select id="estimatedDateFinal" class="form-select" v-model="estimatedProjectDate">
+            <option value="">Select month</option>
+            <option v-for="month in months" :key="month" :value="month">{{ month }}</option>
+          </select>
         </div>
-        <div v-if="quote !== null" class="mt-4 text-center">
-          <button type="button" class="btn btn-custom w-100" @click="submitRequest">Submit Request</button>
+        <div class="mb-3">
+          <label for="additionalNotesFinal" class="form-label">Additional Project Notes</label>
+          <textarea id="additionalNotesFinal" class="form-control" rows="4" v-model="additionalNotes" placeholder="Enter any additional notes"></textarea>
         </div>
+        <button type="button" class="btn btn-custom w-100" @click="submitRequest">Receive your Estimate</button>
       </div>
     </div>
     
@@ -386,9 +455,8 @@
           exterior_features: vm.exteriorFeatures.join(", "),
           flooring: vm.flooring,
           quote: vm.quote,
-          base_cost: vm.baseCost,
-          interior_cost: vm.interiorCost,
-          exterior_cost: vm.exteriorCost,
+          estimated_project_date: vm.estimatedProjectDate,
+          additional_notes: vm.additionalNotes,
           basement_mode: vm.projectType === "basement" ? vm.basementMode : ""
         };
       }
@@ -397,27 +465,34 @@
         el: "#app",
         data: {
           currentStep: 1,
+          // Contact info
           firstName: "",
           lastName: "",
           email: "",
           phone: "",
+          // Project selection and details
           projectType: "",
           area: "",
           finish: "",
           additional: 0,
+          // Quote and cost calculations
           quote: null,
           baseCost: 0,
           interiorCost: 0,
           exteriorCost: 0,
+          // Final review fields (for both flows)
+          estimatedProjectDate: "",
+          additionalNotes: "",
+          // UI controls
           showBreakdown: false,
           interiorFeatures: [],
           exteriorFeatures: [],
           flooring: "",
-          submitted: false,
-          basementMode: "full",
+          basementMode: "full", // Only "full" is valid for basement
           calculating: false,
           errorMessage: "",
           successMessage: "",
+          // Options for project types
           projectOptions: [
             { value: "basement", label: "Basement Finishing", image: "https://rockdale.ca/wp-content/uploads/2024/02/Copy-of-2CRIK89X15F7-scaled.jpg" },
             { value: "kitchen", label: "Kitchen Renovation", image: "https://rockdale.ca/wp-content/uploads/2024/12/45-IMG_6376.jpg" },
@@ -426,6 +501,7 @@
             { value: "fht", label: "Full Home Transformation", image: "https://rockdale.ca/wp-content/uploads/2024/12/16-IMG_6289.jpg" },
             { value: "interiorDesign", label: "Interior Design", image: "https://rockdale.ca/wp-content/uploads/2024/12/16-IMG_6289.jpg" }
           ],
+          // For quote-based projects
           interiorOptions: [
             { value: "bedroom", label: "Bedroom", image: "https://webphotos.blob.core.windows.net/photos/39-IMG_6358.jpg" },
             { value: "bathroom", label: "Bathroom", image: "https://rockdale.ca/wp-content/uploads/2024/02/Copy-of-22D49TG4WAV8-scaled.jpg" },
@@ -442,37 +518,53 @@
             { value: "Vinyl", label: "Vinyl", image: "https://webphotos.blob.core.windows.net/photos/42005-469-swatch.jpg" },
             { value: "Carpet", label: "Carpet", image: "https://webphotos.blob.core.windows.net/photos/shopping.jpeg" }
           ],
+          // Rates for quote calculation (for kitchen and bathroom; basement uses tiered rate)
           rates: {
             kitchen: { basic: 200, standard: 300, premium: 400 },
             bathroom: { basic: 150, standard: 250, premium: 350 },
-            "custom-home": { basic: 100, standard: 150, premium: 200 },
-            fht: { basic: 120, standard: 180, premium: 240 },
-            interiorDesign: { basic: 80, standard: 120, premium: 160 }
+            basement: { basic: 40 }
+          },
+          // Months for project date selectors
+          months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+        },
+        computed: {
+          // Determine if the selected project type uses the non-quote flow
+          isNonQuoteProject() {
+            return ["custom-home", "fht", "interiorDesign"].includes(this.projectType);
           }
         },
         methods: {
-          nextStep() {
+          // STEP 1: Contact Info – Validate & discreetly send, then advance to Step 2
+          submitContactInfo() {
             this.errorMessage = "";
-            this.successMessage = "";
-            if (this.currentStep === 1) {
-              if (!this.firstName || !this.lastName || !this.email || !this.phone) {
-                this.errorMessage = "Please fill out all contact information fields.";
-                return;
-              }
-              // Validate email via backend proxy
-              this.validateEmail(this.email).then(valid => {
-                if (!valid) {
-                  this.errorMessage = "The email address appears to be invalid. Please enter a valid email address.";
-                  return;
-                }
-                // Advance to step 2 (no intermediate success message)
-                this.currentStep = 2;
-              }).catch(err => {
-                console.error("Error validating email:", err);
-                this.errorMessage = "Error validating your email. Please try again.";
-              });
+            if (!this.firstName || !this.lastName || !this.email || !this.phone) {
+              this.errorMessage = "Please fill out all contact information fields.";
               return;
             }
+            this.validateEmail(this.email).then(valid => {
+              if (!valid) {
+                this.errorMessage = "The email address appears to be invalid. Please enter a valid email address.";
+                return;
+              }
+              const contactData = {
+                first_name: this.firstName,
+                last_name: this.lastName,
+                from_email: this.email,
+                phone: this.phone
+              };
+              emailjs.send("service_ec6hztj", "template_65s2w09", contactData)
+                .catch(error => {
+                  console.error("Error sending contact info:", error);
+                });
+              this.currentStep = 2;
+            }).catch(err => {
+              console.error("Error validating email:", err);
+              this.errorMessage = "Error validating your email. Please try again.";
+            });
+          },
+          // STEP 2: Advance to Project Details
+          nextStep() {
+            this.errorMessage = "";
             if (this.currentStep === 2) {
               if (!this.projectType) {
                 this.errorMessage = "Please select a project type.";
@@ -483,12 +575,10 @@
           },
           goBack() {
             this.errorMessage = "";
-            this.successMessage = "";
             if (this.currentStep > 1) this.currentStep--;
           },
           selectProject(value) {
             this.errorMessage = "";
-            this.successMessage = "";
             this.projectType = value;
             // Reset project-specific fields
             this.area = "";
@@ -502,9 +592,7 @@
             this.interiorCost = 0;
             this.exteriorCost = 0;
             this.showBreakdown = false;
-            if (this.currentStep === 2) {
-              this.nextStep();
-            }
+            this.nextStep();
           },
           getProjectLabel(value) {
             const option = this.projectOptions.find(opt => opt.value === value);
@@ -528,103 +616,78 @@
           selectFlooring(value) {
             this.flooring = value;
           },
+          // STEP 3: Calculate Quote for Quote-based Projects with a short loading animation
           calculateQuote() {
             this.errorMessage = "";
-            if (this.projectType === "basement" && this.basementMode === "full") {
-              const size = parseFloat(this.area);
-              if (isNaN(size) || size < 350 || size > 1250) {
-                this.errorMessage = "Please enter a valid basement size (between 350 and 1250 sqft).";
-                return;
-              }
-            } else if (this.projectType !== "basement") {
-              const numericArea = parseFloat(this.area);
-              if (isNaN(numericArea) || numericArea <= 0) {
-                this.errorMessage = "Please enter a valid area in square feet.";
-                return;
-              }
-              if (!this.finish) {
-                this.errorMessage = "Please select a finish quality.";
-                return;
-              }
-            }
+            // Trigger loading animation
             this.calculating = true;
             setTimeout(() => {
               if (this.projectType === "basement") {
-                if (this.basementMode === "full") {
-                  const size = parseFloat(this.area);
-                  let rate = 0;
-                  if (size >= 350 && size < 450) rate = 50;
-                  else if (size >= 450 && size < 650) rate = 48;
-                  else if (size >= 650 && size < 850) rate = 49;
-                  else if (size >= 850 && size < 1050) rate = 40;
-                  else if (size >= 1050 && size <= 1250) rate = 40;
-                  this.baseCost = size * rate;
-                  let interiorCost = 0;
-                  const interiorPrices = { bedroom: 4000, bathroom: 12000, fullKitchen: 6500, wetbar: 4000 };
-                  this.interiorFeatures.forEach(feature => {
-                    if (interiorPrices[feature]) interiorCost += interiorPrices[feature];
-                  });
-                  this.interiorCost = interiorCost;
-                  let exteriorCost = 0;
-                  const exteriorPrices = { undergroundDoor: 30000, aboveGroundDoor: 15000, egressWindow: 6000 };
-                  this.exteriorFeatures.forEach(feature => {
-                    if (exteriorPrices[feature]) exteriorCost += exteriorPrices[feature];
-                  });
-                  this.exteriorCost = exteriorCost;
-                  this.quote = this.baseCost + this.interiorCost + this.exteriorCost;
-                } else if (this.basementMode === "standalone") {
-                  let interiorCost = 0;
-                  const interiorPrices = { bedroom: 6000, bathroom: 14000, fullKitchen: 8500, wetbar: 6000 };
-                  this.interiorFeatures.forEach(feature => {
-                    if (interiorPrices[feature]) interiorCost += interiorPrices[feature];
-                  });
-                  this.interiorCost = interiorCost;
-                  let exteriorCost = 0;
-                  const exteriorPrices = { undergroundDoor: 35000, aboveGroundDoor: 20000, egressWindow: 8000 };
-                  this.exteriorFeatures.forEach(feature => {
-                    if (exteriorPrices[feature]) exteriorCost += exteriorPrices[feature];
-                  });
-                  this.exteriorCost = exteriorCost;
-                  const premiumFactor = 1;
-                  this.baseCost = 0;
-                  this.quote = Math.round((this.interiorCost + this.exteriorCost) * premiumFactor);
-                }
-              } else {
-                const numericArea = parseFloat(this.area);
-                const rateData = this.rates[this.projectType];
-                if (!rateData) {
-                  this.errorMessage = "Rates not defined for the selected project type.";
+                const size = parseFloat(this.area);
+                if (isNaN(size) || size < 350 || size > 1250) {
+                  this.errorMessage = "Please enter a valid basement size (between 350 and 1250 sqft).";
                   this.calculating = false;
                   return;
                 }
-                const baseRate = rateData[this.finish];
-                let total = numericArea * baseRate;
-                if (this.projectType === "kitchen" || this.projectType === "bathroom") {
-                  total += this.additional * 500;
+                let rate = 40;
+                if (size < 450) rate = 50;
+                else if (size < 650) rate = 48;
+                else if (size < 850) rate = 49;
+                this.baseCost = size * rate;
+                let interiorCost = 0;
+                const interiorPrices = { bedroom: 4000, bathroom: 12000, fullKitchen: 6500, wetbar: 4000 };
+                this.interiorFeatures.forEach(feature => {
+                  if (interiorPrices[feature]) interiorCost += interiorPrices[feature];
+                });
+                this.interiorCost = interiorCost;
+                let exteriorCost = 0;
+                const exteriorPrices = { undergroundDoor: 30000, aboveGroundDoor: 15000, egressWindow: 6000 };
+                this.exteriorFeatures.forEach(feature => {
+                  if (exteriorPrices[feature]) exteriorCost += exteriorPrices[feature];
+                });
+                this.exteriorCost = exteriorCost;
+                this.quote = this.baseCost + this.interiorCost + this.exteriorCost;
+              } else if (this.projectType === "kitchen" || this.projectType === "bathroom") {
+                const numericArea = parseFloat(this.area);
+                if (isNaN(numericArea) || numericArea <= 0) {
+                  this.errorMessage = "Please enter a valid area in square feet.";
+                  this.calculating = false;
+                  return;
                 }
+                if (!this.finish) {
+                  this.errorMessage = "Please select a finish quality.";
+                  this.calculating = false;
+                  return;
+                }
+                const rateData = this.rates[this.projectType];
+                const baseRate = rateData ? rateData[this.finish] : 0;
+                let total = numericArea * baseRate;
+                total += this.additional * 500;
                 this.quote = total;
               }
+              // End loading animation
               this.calculating = false;
-            }, 500);
+            }, 500); // 500ms delay for loading animation
           },
           formatCurrency(amount) {
             return amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
           },
+          // Final Submission (Step 3 for non-quote projects or Step 4 for quote-based projects)
           submitRequest() {
             this.errorMessage = "";
-            this.successMessage = "";
-            this.submitted = true;
             var data = getFormData(this);
+            // Send the estimate email to you
             emailjs.send("service_ec6hztj", "template_65s2w09", data)
               .then(response => {
+                // Then send a confirmation email to the user
                 const confirmationData = {
                   to_email: this.email,
-                  message: "Thank you for your interest in working with us. Someone from the team will get back to you within the next 24-48 hours."
+                  message: "Thank you for your interest. Attached is your estimate. We will contact you soon."
                 };
                 return emailjs.send("service_ec6hztj", "template_075db7h", confirmationData);
               })
               .then(response => {
-                this.successMessage = "Your request has been submitted successfully!";
+                this.successMessage = "Your estimate has been sent successfully!";
                 setTimeout(() => {
                   this.resetForm();
                 }, 3000);
@@ -652,17 +715,18 @@
             this.interiorCost = 0;
             this.exteriorCost = 0;
             this.showBreakdown = false;
-            this.submitted = false;
             this.basementMode = "full";
             this.errorMessage = "";
             this.successMessage = "";
+            this.estimatedProjectDate = "";
+            this.additionalNotes = "";
           },
           handleKeydown(e) {
             if (e.key === "Enter") {
               this.nextStep();
             }
           },
-          // Validate email via our backend proxy (NeverBounce)
+          // Validate email using the backend proxy (NeverBounce)
           validateEmail(email) {
             return fetch(`/api/validate-email?email=${encodeURIComponent(email)}`)
               .then(response => response.json())
@@ -682,7 +746,7 @@
         watch: {
           interiorFeatures: {
             handler(newVal) {
-              if (this.quote !== null && this.projectType === "basement") {
+              if (this.quote !== null && !this.isNonQuoteProject) {
                 this.calculateQuote();
               }
             },
@@ -690,7 +754,7 @@
           },
           exteriorFeatures: {
             handler(newVal) {
-              if (this.quote !== null && this.projectType === "basement") {
+              if (this.quote !== null && !this.isNonQuoteProject) {
                 this.calculateQuote();
               }
             },
@@ -705,7 +769,7 @@
         }
       });
     </script>
-    <!-- Optional: Include any additional libraries -->
+    <!-- Optional additional libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.2/iframeResizer.contentWindow.min.js"></script>
   </body>
 </html>

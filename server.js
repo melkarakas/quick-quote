@@ -16,7 +16,7 @@ app.get("/api/validate-email", async (req, res) => {
   }
 
   try {
-    const url = `https://api.neverbounce.com/v4/single/check?key=${NEVER_BOUNCE_API_KEY}&email=${encodeURIComponent(email)}`;
+    const url = `https://api.neverbounce.com/v4/single/check?key=${"private_f204b3b2223399e2a4ef1a5db03c2443"}&email=${encodeURIComponent(email)}`;
     const response = await fetch(url);
     const data = await response.json();
 
