@@ -7,14 +7,177 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
-    <!-- Inline CSS -->
     <style>
-      /* (Your existing CSS styles remain here...) */
-      /* For brevity, not repeating the entire CSS. */
+      /* Global Styles */
+      body {
+        font-family: "Montserrat", sans-serif;
+        background: #ffffff;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+      .calculator-container {
+        max-width: 1000px;
+        margin: 50px auto;
+        background: #fff;
+        border-radius: 15px;
+        padding: 40px 30px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        position: relative;
+      }
+      .calculator-container h2 {
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: #000;
+        text-align: center;
+      }
+      .form-control {
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        font-size: 1rem;
+      }
+      .form-control:focus {
+        border-color: #F1B84B;
+        box-shadow: 0 0 0 0.2rem rgba(241, 184, 75, 0.25);
+      }
+      .form-group label {
+        font-weight: 600;
+      }
+      .btn-custom {
+        background-color: #F1B84B;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 20px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #fff;
+        transition: background-color 0.3s ease;
+      }
+      .btn-custom:hover {
+        background-color: #d1a13b;
+      }
+      .btn-custom-sm {
+        background-color: #F1B84B;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #fff;
+        transition: background-color 0.3s ease;
+      }
+      .btn-custom-sm:hover {
+        background-color: #d1a13b;
+      }
+      .project-card,
+      .feature-card {
+        position: relative;
+        cursor: pointer;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        height: 150px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        overflow: hidden;
+      }
+      .project-card:hover,
+      .feature-card:hover {
+        border-color: #F1B84B;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      }
+      .selected {
+        border-color: #F1B84B;
+        border-width: 3px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      }
+      .card-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 10px;
+        z-index: 1;
+      }
+      .card .card-body {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        padding: 10px;
+        text-align: center;
+      }
+      .card .card-title {
+        font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+        margin: 0;
+        color: #fff;
+        word-wrap: break-word;
+      }
+      .nav-back {
+        margin-bottom: 20px;
+      }
+      .quote-display h4 {
+        font-weight: 700;
+        color: #000;
+      }
+      .quote-display p {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #F1B84B;
+      }
+      .contact-info-section,
+      .mb-3 {
+        margin-bottom: 30px;
+      }
+      h5,
+      h6 {
+        color: #000;
+      }
+      /* Toggle Button Styling for Basement Mode */
+      .toggle-button {
+        margin-right: 10px;
+        border: 2px solid #F1B84B;
+        border-radius: 10px;
+        background-color: #fff;
+        color: #F1B84B;
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+      .toggle-button.active,
+      .toggle-button:hover {
+        background-color: #F1B84B;
+        color: #fff;
+      }
+      /* Loading Bar Animation for Quote Calculation */
+      .calculating-loading {
+        width: 100%;
+        height: 4px;
+        background: #ddd;
+        margin-top: 10px;
+        overflow: hidden;
+        border-radius: 2px;
+      }
+      .loading-bar {
+        width: 0;
+        height: 100%;
+        background: #F1B84B;
+        animation: loadingAnimation 0.5s ease-out forwards;
+      }
+      @keyframes loadingAnimation {
+        from { width: 0%; }
+        to { width: 100%; }
+      }
     </style>
   </head>
   <body>
-    <!-- Main Container -->
     <div id="app" class="calculator-container">
       <h2>Quick Estimate</h2>
       <!-- Inline Success Message -->
@@ -25,16 +188,162 @@
       <div v-if="errorMessage" class="alert alert-danger" role="alert" style="margin-bottom: 20px;">
         {{ errorMessage }}
       </div>
-      <!-- (Your form steps 1, 2, 3 remain unchanged) -->
-      <!-- ... -->
+      <!-- Step 1: Contact Information -->
+      <div v-if="currentStep === 1">
+        <div class="contact-info-section">
+          <h5>Contact Information</h5>
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input type="text" id="firstName" class="form-control" v-model="firstName" placeholder="Enter your first name" />
+          </div>
+          <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input type="text" id="lastName" class="form-control" v-model="lastName" placeholder="Enter your last name" />
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" class="form-control" v-model="email" placeholder="Enter your email" />
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" class="form-control" v-model="phone" placeholder="Enter your phone number" />
+          </div>
+        </div>
+        <button type="button" class="btn btn-custom btn-block" @click="nextStep">Next</button>
+      </div>
+      <!-- Step 2: Project Type Selection -->
+      <div v-if="currentStep === 2">
+        <div class="nav-back">
+          <button type="button" class="btn btn-custom-sm" @click="goBack">&laquo; Back</button>
+        </div>
+        <p class="mb-3 font-weight-bold">Select a project type:</p>
+        <div class="row">
+          <div class="col-md-4 mb-3" v-for="option in projectOptions" :key="option.value">
+            <div class="card project-card" :class="{ selected: projectType === option.value }" @click="selectProject(option.value)" :style="{ backgroundImage: 'url(' + option.image + ')' }">
+              <div class="card-overlay"></div>
+              <div class="card-body">
+                <h5 class="card-title">{{ option.label }}</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Step 3: Project Details & Quote Calculation -->
+      <div v-if="currentStep === 3">
+        <div class="nav-back">
+          <button type="button" class="btn btn-custom-sm" @click="goBack">&laquo; Back</button>
+        </div>
+        <!-- For Basement Finishing, show specialized questions -->
+        <div v-if="projectType === 'basement'">
+          <h5>Basement Finishing Details</h5>
+          <div class="form-group">
+            <label>Basement Finishing Option:</label>
+            <div class="d-flex">
+              <button type="button" class="toggle-button" :class="{ active: basementMode === 'full' }" @click="basementMode = 'full'">Full Basement Finishing</button>
+              <button type="button" class="toggle-button" :class="{ active: basementMode === 'standalone' }" @click="basementMode = 'standalone'">Standalone Feature Purchases</button>
+            </div>
+          </div>
+          <div v-if="basementMode === 'full'" class="form-group">
+            <label for="area">What size is your basement? (sqft)</label>
+            <input type="number" id="area" class="form-control" v-model="area" placeholder="Enter basement size in sqft" />
+          </div>
+          <div class="mb-3">
+            <h6>Select Interior Features:</h6>
+            <div class="row">
+              <div class="col-md-3 mb-3" v-for="option in interiorOptions" :key="option.value">
+                <div class="card feature-card" :class="{ selected: interiorFeatures.includes(option.value) }" @click="toggleInterior(option.value)" :style="{ backgroundImage: 'url(' + option.image + ')' }">
+                  <div class="card-overlay"></div>
+                  <div class="card-body">
+                    <h6 class="card-title">{{ option.label }}</h6>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <h6>Select Exterior Features:</h6>
+            <div class="row">
+              <div class="col-md-3 mb-3" v-for="option in exteriorOptions" :key="option.value">
+                <div class="card feature-card" :class="{ selected: exteriorFeatures.includes(option.value) }" @click="toggleExterior(option.value)" :style="{ backgroundImage: 'url(' + option.image + ')' }">
+                  <div class="card-overlay"></div>
+                  <div class="card-body">
+                    <h6 class="card-title">{{ option.label }}</h6>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <h6>Select Flooring:</h6>
+            <div class="row">
+              <div class="col-md-3 mb-3" v-for="option in flooringOptions" :key="option.value">
+                <div class="card feature-card" :class="{ selected: flooring === option.value }" @click="selectFlooring(option.value)" :style="{ backgroundImage: 'url(' + option.image + ')' }">
+                  <div class="card-overlay"></div>
+                  <div class="card-body">
+                    <h6 class="card-title">{{ option.label }}</h6>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-custom btn-block" @click="calculateQuote">Calculate Quote</button>
+          <div v-if="calculating" class="calculating-loading">
+            <div class="loading-bar"></div>
+          </div>
+        </div>
+        <!-- For Other Project Types -->
+        <div v-else>
+          <div v-if="projectType">
+            <p class="mb-3 font-weight-bold">Project Type: {{ getProjectLabel(projectType) }}</p>
+          </div>
+          <div class="form-group">
+            <label for="area">Area (in square feet)</label>
+            <input type="number" id="area" class="form-control" v-model="area" placeholder="Enter area in square feet" />
+          </div>
+          <div class="form-group">
+            <label for="finish">Finish Quality</label>
+            <select id="finish" class="form-control" v-model="finish">
+              <option value="">Select finish quality</option>
+              <option value="basic">Basic</option>
+              <option value="standard">Standard</option>
+              <option value="premium">Premium</option>
+            </select>
+          </div>
+          <div v-if="projectType === 'kitchen' || projectType === 'bathroom'" class="form-group">
+            <label for="additional">Additional Options (Number of extra fixtures/upgrades)</label>
+            <input type="number" id="additional" class="form-control" v-model.number="additional" placeholder="0" />
+          </div>
+          <button type="button" class="btn btn-custom btn-block" @click="calculateQuote">Calculate Quote</button>
+          <div v-if="calculating" class="calculating-loading">
+            <div class="loading-bar"></div>
+          </div>
+        </div>
+        <div v-if="quote !== null" class="quote-display mt-4 text-center">
+          <h4>Your Estimated Project Quote:</h4>
+          <p>{{ formatCurrency(quote) }}</p>
+        </div>
+        <div v-if="quote !== null" class="mt-4 text-center">
+          <button type="button" class="btn btn-custom btn-block" @click="showBreakdown = !showBreakdown">
+            {{ showBreakdown ? "Hide" : "Show" }} Pricing Breakdown
+          </button>
+        </div>
+        <div v-if="showBreakdown" class="mt-3">
+          <p><strong>Base Cost:</strong> {{ formatCurrency(baseCost) }}</p>
+          <p><strong>Interior Features Cost:</strong> {{ formatCurrency(interiorCost) }}</p>
+          <p><strong>Exterior Features Cost:</strong> {{ formatCurrency(exteriorCost) }}</p>
+          <p><strong>Total:</strong> {{ formatCurrency(quote) }}</p>
+        </div>
+        <div v-if="quote !== null" class="mt-4 text-center">
+          <button type="button" class="btn btn-custom btn-block" @click="submitRequest">Submit Request</button>
+        </div>
+      </div>
     </div>
-
     <!-- Load EmailJS and Vue.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script>
-      emailjs.init("qtZ7qNCtaw9RCD3l_"); // Your EmailJS public key
-
+      // Initialize EmailJS with your public key
+      emailjs.init("qtZ7qNCtaw9RCD3l_");
       function getFormData(vm) {
         return {
           first_name: vm.firstName,
@@ -55,7 +364,6 @@
           basement_mode: vm.projectType === "basement" ? vm.basementMode : ""
         };
       }
-
       var app = new Vue({
         el: "#app",
         data: {
@@ -91,13 +399,13 @@
                 this.errorMessage = "Please fill out all contact information fields.";
                 return;
               }
-              // Validate email via our backend NeverBounce proxy.
-              this.validateEmail(this.email).then((valid) => {
+              // Validate email via our backend proxy (NeverBounce)
+              this.validateEmail(this.email).then(valid => {
                 if (!valid) {
                   this.errorMessage = "The email address appears to be invalid. Please enter a valid email address.";
                   return;
                 }
-                // Send contact info immediately via EmailJS.
+                // Send contact info immediately via EmailJS
                 const contactData = {
                   first_name: this.firstName,
                   last_name: this.lastName,
@@ -109,7 +417,7 @@
                     this.successMessage = "Contact information received. You may continue with the application.";
                     this.currentStep = 2;
                   })
-                  .catch((error) => {
+                  .catch(error => {
                     console.error("EmailJS contact info error:", error);
                     this.errorMessage = "Error sending your contact information. Please try again.";
                   });
@@ -304,16 +612,12 @@
               this.nextStep();
             }
           },
-          // Updated validateEmail method to call our secure backend proxy.
+          // Validate email via backend proxy (NeverBounce)
           validateEmail(email) {
             return fetch(`/api/validate-email?email=${encodeURIComponent(email)}`)
               .then(response => response.json())
               .then(data => {
-                if (
-                  data.result === "valid" ||
-                  data.result === "accept_all" ||
-                  data.result === "catchall"
-                ) {
+                if (data.result === "valid" || data.result === "accept_all" || data.result === "catchall") {
                   return true;
                 } else {
                   return false;
