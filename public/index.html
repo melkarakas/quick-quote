@@ -188,6 +188,7 @@
       <div v-if="errorMessage" class="alert alert-danger" role="alert" style="margin-bottom: 20px;">
         {{ errorMessage }}
       </div>
+      
       <!-- Step 1: Contact Information -->
       <div v-if="currentStep === 1">
         <div class="contact-info-section">
@@ -209,8 +210,10 @@
             <input type="tel" id="phone" class="form-control" v-model="phone" placeholder="Enter your phone number" />
           </div>
         </div>
+        <!-- When Next is clicked on Step 1, we validate the fields and email, then advance to Step 2 without sending the contact info -->
         <button type="button" class="btn btn-custom btn-block" @click="nextStep">Next</button>
       </div>
+      
       <!-- Step 2: Project Type Selection -->
       <div v-if="currentStep === 2">
         <div class="nav-back">
@@ -219,7 +222,10 @@
         <p class="mb-3 font-weight-bold">Select a project type:</p>
         <div class="row">
           <div class="col-md-4 mb-3" v-for="option in projectOptions" :key="option.value">
-            <div class="card project-card" :class="{ selected: projectType === option.value }" @click="selectProject(option.value)" :style="{ backgroundImage: 'url(' + option.image + ')' }">
+            <div class="card project-card" 
+                 :class="{ selected: projectType === option.value }" 
+                 @click="selectProject(option.value)" 
+                 :style="{ backgroundImage: 'url(' + option.image + ')' }">
               <div class="card-overlay"></div>
               <div class="card-body">
                 <h5 class="card-title">{{ option.label }}</h5>
@@ -227,20 +233,26 @@
             </div>
           </div>
         </div>
+        <!-- No separate Next button is needed here -->
       </div>
+      
       <!-- Step 3: Project Details & Quote Calculation -->
       <div v-if="currentStep === 3">
         <div class="nav-back">
           <button type="button" class="btn btn-custom-sm" @click="goBack">&laquo; Back</button>
         </div>
-        <!-- For Basement Finishing, show specialized questions -->
+        <!-- For Basement Finishing Projects -->
         <div v-if="projectType === 'basement'">
           <h5>Basement Finishing Details</h5>
           <div class="form-group">
             <label>Basement Finishing Option:</label>
             <div class="d-flex">
-              <button type="button" class="toggle-button" :class="{ active: basementMode === 'full' }" @click="basementMode = 'full'">Full Basement Finishing</button>
-              <button type="button" class="toggle-button" :class="{ active: basementMode === 'standalone' }" @click="basementMode = 'standalone'">Standalone Feature Purchases</button>
+              <button type="button" class="toggle-button" :class="{ active: basementMode === 'full' }" @click="basementMode = 'full'">
+                Full Basement Finishing
+              </button>
+              <button type="button" class="toggle-button" :class="{ active: basementMode === 'standalone' }" @click="basementMode = 'standalone'">
+                Standalone Feature Purchases
+              </button>
             </div>
           </div>
           <div v-if="basementMode === 'full'" class="form-group">
@@ -338,12 +350,15 @@
         </div>
       </div>
     </div>
+    
     <!-- Load EmailJS and Vue.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script>
       // Initialize EmailJS with your public key
       emailjs.init("qtZ7qNCtaw9RCD3l_");
+      
+      // Utility function to collect all form data from the Vue instance
       function getFormData(vm) {
         return {
           first_name: vm.firstName,
@@ -364,6 +379,7 @@
           basement_mode: vm.projectType === "basement" ? vm.basementMode : ""
         };
       }
+      
       var app = new Vue({
         el: "#app",
         data: {
@@ -388,7 +404,38 @@
           basementMode: "full",
           calculating: false,
           errorMessage: "",
-          successMessage: ""
+          successMessage: "",
+          projectOptions: [
+            { value: "basement", label: "Basement Finishing", image: "https://rockdale.ca/wp-content/uploads/2024/02/Copy-of-2CRIK89X15F7-scaled.jpg" },
+            { value: "kitchen", label: "Kitchen Renovation", image: "https://rockdale.ca/wp-content/uploads/2024/12/45-IMG_6376.jpg" },
+            { value: "bathroom", label: "Bathroom Renovation", image: "https://rockdale.ca/wp-content/uploads/2024/02/Copy-of-22D48NHQ09EV-scaled.jpg" },
+            { value: "custom-home", label: "Custom Home", image: "https://rockdale.ca/wp-content/uploads/2024/12/04-IMG_6413.jpg" },
+            { value: "fht", label: "Full Home Transformation", image: "https://rockdale.ca/wp-content/uploads/2024/12/16-IMG_6289.jpg" },
+            { value: "interiorDesign", label: "Interior Design", image: "https://rockdale.ca/wp-content/uploads/2024/12/16-IMG_6289.jpg" }
+          ],
+          interiorOptions: [
+            { value: "bedroom", label: "Bedroom", image: "https://webphotos.blob.core.windows.net/photos/39-IMG_6358.jpg" },
+            { value: "bathroom", label: "Bathroom", image: "https://rockdale.ca/wp-content/uploads/2024/02/Copy-of-22D49TG4WAV8-scaled.jpg" },
+            { value: "fullKitchen", label: "Full Kitchen", image: "https://rockdale.ca/wp-content/uploads/2024/02/Copy-of-22D49KF4DMGC-1-scaled.jpg" },
+            { value: "wetbar", label: "Wetbar", image: "https://webphotos.blob.core/windows.net/photos/replicate-prediction-yszz5wam6hrge0cmtzs8w65q0m.png" }
+          ],
+          exteriorOptions: [
+            { value: "undergroundDoor", label: "Underground Door Opening", image: "https://webphotos.blob.core.windows.net/photos/IMG_2345.jpg" },
+            { value: "aboveGroundDoor", label: "Above Ground Door Opening", image: "https://webphotos.blob.core/windows.net/photos/IMG_1398.jpeg" },
+            { value: "egressWindow", label: "New Egress Window", image: "https://webphotos.blob.core/windows.net/photos/Basement-EGRESS-6.jpg" }
+          ],
+          flooringOptions: [
+            { value: "Hardwood", label: "Hardwood", image: "https://webphotos.blob.core/windows.net/photos/everwood-designer-plus-barossa-2-e1669668217311-1-1-2.jpg" },
+            { value: "Vinyl", label: "Vinyl", image: "https://webphotos.blob.core/windows.net/photos/42005-469-swatch.jpg" },
+            { value: "Carpet", label: "Carpet", image: "https://webphotos.blob.core/windows.net/photos/shopping.jpeg" }
+          ],
+          rates: {
+            kitchen: { basic: 200, standard: 300, premium: 400 },
+            bathroom: { basic: 150, standard: 250, premium: 350 },
+            "custom-home": { basic: 100, standard: 150, premium: 200 },
+            fht: { basic: 120, standard: 180, premium: 240 },
+            interiorDesign: { basic: 80, standard: 120, premium: 160 }
+          }
         },
         methods: {
           nextStep() {
@@ -405,22 +452,11 @@
                   this.errorMessage = "The email address appears to be invalid. Please enter a valid email address.";
                   return;
                 }
-                // Send contact info immediately via EmailJS
-                const contactData = {
-                  first_name: this.firstName,
-                  last_name: this.lastName,
-                  from_email: this.email,
-                  phone: this.phone
-                };
-                emailjs.send("service_ec6hztj", "template_contact_info", contactData)
-                  .then(() => {
-                    this.successMessage = "Contact information received. You may continue with the application.";
-                    this.currentStep = 2;
-                  })
-                  .catch(error => {
-                    console.error("EmailJS contact info error:", error);
-                    this.errorMessage = "Error sending your contact information. Please try again.";
-                  });
+                // Advance to step 2 without showing any success message
+                this.currentStep = 2;
+              }).catch(err => {
+                console.error("Error validating email:", err);
+                this.errorMessage = "Error validating your email. Please try again.";
               });
               return;
             }
@@ -441,6 +477,7 @@
             this.errorMessage = "";
             this.successMessage = "";
             this.projectType = value;
+            // Reset project-specific fields
             this.area = "";
             this.finish = "";
             this.additional = 0;
@@ -566,20 +603,20 @@
             this.submitted = true;
             var data = getFormData(this);
             emailjs.send("service_ec6hztj", "template_65s2w09", data)
-              .then((response) => {
+              .then(response => {
                 const confirmationData = {
                   to_email: this.email,
                   message: "Thank you for your interest in working with us. Someone from the team will get back to you within the next 24-48 hours."
                 };
                 return emailjs.send("service_ec6hztj", "template_075db7h", confirmationData);
               })
-              .then((response) => {
+              .then(response => {
                 this.successMessage = "Your request has been submitted successfully!";
                 setTimeout(() => {
                   this.resetForm();
                 }, 3000);
               })
-              .catch((error) => {
+              .catch(error => {
                 console.error("EmailJS error:", error);
                 this.errorMessage = "There was an error submitting your request. Please try again later.";
               });
@@ -612,7 +649,7 @@
               this.nextStep();
             }
           },
-          // Validate email via backend proxy (NeverBounce)
+          // Validate email via our backend proxy (NeverBounce)
           validateEmail(email) {
             return fetch(`/api/validate-email?email=${encodeURIComponent(email)}`)
               .then(response => response.json())
