@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Quick Estimate - Rockdale Homes</title>
+    <!-- Bootstrap CSS for basic styling -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
+    <!-- Inline CSS -->
+    <style>
+      /* (Your existing CSS styles remain here...) */
+      /* For brevity, not repeating the entire CSS. */
+    </style>
+  </head>
+  <body>
+    <!-- Main Container -->
+    <div id="app" class="calculator-container">
+      <h2>Quick Estimate</h2>
+      <!-- Inline Success Message -->
+      <div v-if="successMessage" class="alert alert-success" role="alert" style="margin-bottom: 20px;">
+        {{ successMessage }}
+      </div>
+      <!-- Inline Error Message -->
+      <div v-if="errorMessage" class="alert alert-danger" role="alert" style="margin-bottom: 20px;">
+        {{ errorMessage }}
+      </div>
+      <!-- (Your form steps 1, 2, 3 remain unchanged) -->
+      <!-- ... -->
+    </div>
+
+    <!-- Load EmailJS and Vue.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script>
+      emailjs.init("qtZ7qNCtaw9RCD3l_"); // Your EmailJS public key
+
+      function getFormData(vm) {
+        return {
+          first_name: vm.firstName,
+          last_name: vm.lastName,
+          from_email: vm.email,
+          phone: vm.phone,
+          project_type: vm.projectType ? vm.getProjectLabel(vm.projectType) : "",
+          area: vm.area,
+          finish: vm.finish,
+          additional: vm.additional,
+          interior_features: vm.interiorFeatures.join(", "),
+          exterior_features: vm.exteriorFeatures.join(", "),
+          flooring: vm.flooring,
+          quote: vm.quote,
+          base_cost: vm.baseCost,
+          interior_cost: vm.interiorCost,
+          exterior_cost: vm.exteriorCost,
+          basement_mode: vm.projectType === "basement" ? vm.basementMode : ""
+        };
+      }
+
+      var app = new Vue({
+        el: "#app",
+        data: {
+          currentStep: 1,
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          projectType: "",
+          area: "",
+          finish: "",
+          additional: 0,
+          quote: null,
+          baseCost: 0,
+          interiorCost: 0,
+          exteriorCost: 0,
+          showBreakdown: false,
+          interiorFeatures: [],
+          exteriorFeatures: [],
+          flooring: "",
+          submitted: false,
+          basementMode: "full",
+          calculating: false,
+          errorMessage: "",
+          successMessage: ""
+        },
+        methods: {
+          nextStep() {
+            this.errorMessage = "";
+            this.successMessage = "";
+            if (this.currentStep === 1) {
+              if (!this.firstName || !this.lastName || !this.email || !this.phone) {
+                this.errorMessage = "Please fill out all contact information fields.";
+                return;
+              }
+              // Validate email via our backend NeverBounce proxy.
+              this.validateEmail(this.email).then((valid) => {
+                if (!valid) {
+                  this.errorMessage = "The email address appears to be invalid. Please enter a valid email address.";
+                  return;
+                }
+                // Send contact info immediately via EmailJS.
+                const contactData = {
+                  first_name: this.firstName,
+                  last_name: this.lastName,
+                  from_email: this.email,
+                  phone: this.phone
+                };
+                emailjs.send("service_ec6hztj", "template_contact_info", contactData)
+                  .then(() => {
+                    this.successMessage = "Contact information received. You may continue with the application.";
+                    this.currentStep = 2;
+                  })
+                  .catch((error) => {
+                    console.error("EmailJS contact info error:", error);
+                    this.errorMessage = "Error sending your contact information. Please try again.";
+                  });
+              });
+              return;
+            }
+            if (this.currentStep === 2) {
+              if (!this.projectType) {
+                this.errorMessage = "Please select a project type.";
+                return;
+              }
+              this.currentStep = 3;
+            }
+          },
+          goBack() {
+            this.errorMessage = "";
+            this.successMessage = "";
+            if (this.currentStep > 1) this.currentStep--;
+          },
+          selectProject(value) {
+            this.errorMessage = "";
+            this.successMessage = "";
+            this.projectType = value;
+            this.area = "";
+            this.finish = "";
+            this.additional = 0;
+            this.quote = null;
+            this.interiorFeatures = [];
+            this.exteriorFeatures = [];
+            this.flooring = "";
+            this.baseCost = 0;
+            this.interiorCost = 0;
+            this.exteriorCost = 0;
+            this.showBreakdown = false;
+            if (this.currentStep === 2) {
+              this.nextStep();
+            }
+          },
+          getProjectLabel(value) {
+            const option = this.projectOptions.find(opt => opt.value === value);
+            return option ? option.label : "";
+          },
+          toggleInterior(feature) {
+            const index = this.interiorFeatures.indexOf(feature);
+            if (index > -1) this.interiorFeatures.splice(index, 1);
+            else this.interiorFeatures.push(feature);
+          },
+          toggleExterior(feature) {
+            if (["undergroundDoor", "aboveGroundDoor"].includes(feature)) {
+              this.exteriorFeatures = this.exteriorFeatures.filter(
+                f => !(["undergroundDoor", "aboveGroundDoor"].includes(f) && f !== feature)
+              );
+            }
+            const index = this.exteriorFeatures.indexOf(feature);
+            if (index > -1) this.exteriorFeatures.splice(index, 1);
+            else this.exteriorFeatures.push(feature);
+          },
+          selectFlooring(value) {
+            this.flooring = value;
+          },
+          calculateQuote() {
+            this.errorMessage = "";
+            if (this.projectType === "basement" && this.basementMode === "full") {
+              const size = parseFloat(this.area);
+              if (isNaN(size) || size < 350 || size > 1250) {
+                this.errorMessage = "Please enter a valid basement size (between 350 and 1250 sqft).";
+                return;
+              }
+            } else if (this.projectType !== "basement") {
+              const numericArea = parseFloat(this.area);
+              if (isNaN(numericArea) || numericArea <= 0) {
+                this.errorMessage = "Please enter a valid area in square feet.";
+                return;
+              }
+              if (!this.finish) {
+                this.errorMessage = "Please select a finish quality.";
+                return;
+              }
+            }
+            this.calculating = true;
+            setTimeout(() => {
+              if (this.projectType === "basement") {
+                if (this.basementMode === "full") {
+                  const size = parseFloat(this.area);
+                  let rate = 0;
+                  if (size >= 350 && size < 450) rate = 50;
+                  else if (size >= 450 && size < 650) rate = 48;
+                  else if (size >= 650 && size < 850) rate = 49;
+                  else if (size >= 850 && size < 1050) rate = 40;
+                  else if (size >= 1050 && size <= 1250) rate = 40;
+                  this.baseCost = size * rate;
+                  let interiorCost = 0;
+                  const interiorPrices = { bedroom: 4000, bathroom: 12000, fullKitchen: 6500, wetbar: 4000 };
+                  this.interiorFeatures.forEach(feature => {
+                    if (interiorPrices[feature]) interiorCost += interiorPrices[feature];
+                  });
+                  this.interiorCost = interiorCost;
+                  let exteriorCost = 0;
+                  const exteriorPrices = { undergroundDoor: 30000, aboveGroundDoor: 15000, egressWindow: 6000 };
+                  this.exteriorFeatures.forEach(feature => {
+                    if (exteriorPrices[feature]) exteriorCost += exteriorPrices[feature];
+                  });
+                  this.exteriorCost = exteriorCost;
+                  this.quote = this.baseCost + this.interiorCost + this.exteriorCost;
+                } else if (this.basementMode === "standalone") {
+                  let interiorCost = 0;
+                  const interiorPrices = { bedroom: 6000, bathroom: 14000, fullKitchen: 8500, wetbar: 6000 };
+                  this.interiorFeatures.forEach(feature => {
+                    if (interiorPrices[feature]) interiorCost += interiorPrices[feature];
+                  });
+                  this.interiorCost = interiorCost;
+                  let exteriorCost = 0;
+                  const exteriorPrices = { undergroundDoor: 35000, aboveGroundDoor: 20000, egressWindow: 8000 };
+                  this.exteriorFeatures.forEach(feature => {
+                    if (exteriorPrices[feature]) exteriorCost += exteriorPrices[feature];
+                  });
+                  this.exteriorCost = exteriorCost;
+                  const premiumFactor = 1;
+                  this.baseCost = 0;
+                  this.quote = Math.round((this.interiorCost + this.exteriorCost) * premiumFactor);
+                }
+              } else {
+                const numericArea = parseFloat(this.area);
+                const rateData = this.rates[this.projectType];
+                if (!rateData) {
+                  this.errorMessage = "Rates not defined for the selected project type.";
+                  this.calculating = false;
+                  return;
+                }
+                const baseRate = rateData[this.finish];
+                let total = numericArea * baseRate;
+                if (this.projectType === "kitchen" || this.projectType === "bathroom") {
+                  total += this.additional * 500;
+                }
+                this.quote = total;
+              }
+              this.calculating = false;
+            }, 500);
+          },
+          formatCurrency(amount) {
+            return amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
+          },
+          submitRequest() {
+            this.errorMessage = "";
+            this.successMessage = "";
+            this.submitted = true;
+            var data = getFormData(this);
+            emailjs.send("service_ec6hztj", "template_65s2w09", data)
+              .then((response) => {
+                const confirmationData = {
+                  to_email: this.email,
+                  message: "Thank you for your interest in working with us. Someone from the team will get back to you within the next 24-48 hours."
+                };
+                return emailjs.send("service_ec6hztj", "template_075db7h", confirmationData);
+              })
+              .then((response) => {
+                this.successMessage = "Your request has been submitted successfully!";
+                setTimeout(() => {
+                  this.resetForm();
+                }, 3000);
+              })
+              .catch((error) => {
+                console.error("EmailJS error:", error);
+                this.errorMessage = "There was an error submitting your request. Please try again later.";
+              });
+          },
+          resetForm() {
+            this.currentStep = 1;
+            this.firstName = "";
+            this.lastName = "";
+            this.email = "";
+            this.phone = "";
+            this.projectType = "";
+            this.area = "";
+            this.finish = "";
+            this.additional = 0;
+            this.quote = null;
+            this.interiorFeatures = [];
+            this.exteriorFeatures = [];
+            this.flooring = "";
+            this.baseCost = 0;
+            this.interiorCost = 0;
+            this.exteriorCost = 0;
+            this.showBreakdown = false;
+            this.submitted = false;
+            this.basementMode = "full";
+            this.errorMessage = "";
+            this.successMessage = "";
+          },
+          handleKeydown(e) {
+            if (e.key === "Enter") {
+              this.nextStep();
+            }
+          },
+          // Updated validateEmail method to call our secure backend proxy.
+          validateEmail(email) {
+            return fetch(`/api/validate-email?email=${encodeURIComponent(email)}`)
+              .then(response => response.json())
+              .then(data => {
+                if (
+                  data.result === "valid" ||
+                  data.result === "accept_all" ||
+                  data.result === "catchall"
+                ) {
+                  return true;
+                } else {
+                  return false;
+                }
+              })
+              .catch(err => {
+                console.error("Error validating email:", err);
+                return false;
+              });
+          }
+        },
+        watch: {
+          interiorFeatures: {
+            handler(newVal) {
+              if (this.quote !== null && this.projectType === "basement") {
+                this.calculateQuote();
+              }
+            },
+            deep: true
+          },
+          exteriorFeatures: {
+            handler(newVal) {
+              if (this.quote !== null && this.projectType === "basement") {
+                this.calculateQuote();
+              }
+            },
+            deep: true
+          }
+        },
+        mounted() {
+          window.addEventListener("keydown", this.handleKeydown);
+        },
+        beforeDestroy() {
+          window.removeEventListener("keydown", this.handleKeydown);
+        }
+      });
+    </script>
+  </body>
+</html>

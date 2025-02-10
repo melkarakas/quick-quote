@@ -1,0 +1,19 @@
+{
+    "name": "rockdale-estimate-app",
+    "version": "1.0.0",
+    "description": "A full-stack Node.js application for providing quick estimates and email validation for Rockdale Homes.",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js"
+    },
+    "author": "Rockdale Homes",
+    "license": "MIT",
+    "dependencies": {
+      "express": "^4.18.2",
+      "node-fetch": "^2.6.1"
+    },
+    "engines": {
+      "node": ">=14.0.0"
+    }
+  }
+  
