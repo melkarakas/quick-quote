@@ -6,7 +6,7 @@ const app = express();
 const NEVER_BOUNCE_API_KEY = process.env.NEVER_BOUNCE_API_KEY; // Set via Azure Application Settings
 
 // Serve static files from the "public" folder
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "")));
 
 // Proxy endpoint for email validation using NeverBounce
 app.get("/api/validate-email", async (req, res) => {
